@@ -25,3 +25,11 @@ CREATE TABLE orders (
     total_cost DECIMAL(10, 2),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+ALTER TABLE users ADD COLUMN role ENUM('admin', 'customer') DEFAULT 'customer';
+
+-- Admin user
+INSERT INTO users (username, password, email, role) VALUES ('admin', MD5('admin123'), 'admin@example.com', 'admin');
+
+-- Customer user
+INSERT INTO users (username, password, email, role) VALUES ('customer', MD5('customer123'), 'customer@example.com', 'customer');
