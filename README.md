@@ -1,3 +1,3 @@
 SQLi payload
->> admin' OR 1=1 --'
+> admin' OR 1=1 --'
 
