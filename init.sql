@@ -33,3 +33,7 @@ INSERT INTO users (username, password, email, role) VALUES ('admin', MD5('admin1
 
 -- Customer user
 INSERT INTO users (username, password, email, role) VALUES ('customer', MD5('customer123'), 'customer@example.com', 'customer');
+
+INSERT INTO users (username, password, email, role) VALUES ('customer', MD5('customer123'), 'customer@example.com', 'customer');
+INSERT INTO users (username, password, email, role) VALUES ('customer', MD5('customer123'), 'customer@example.com', 'customer');
+INSERT INTO users (username, password, email, role) VALUES ('customer', MD5('customer123'), 'customer@example.com', 'customer');
