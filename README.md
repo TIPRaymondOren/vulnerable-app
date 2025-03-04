@@ -13,6 +13,9 @@
 
 ## Vulnerabilities
 ### SQLi payload
+###### for admin account
 #### admin' OR 1=1 --'
+###### for customer account
+#### customer1' OR 1=1 --'
 
 --------
