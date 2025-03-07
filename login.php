@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (PDOException $e) {
         // Display the error message for debugging
-        echo "<div class='alert alert-danger text-center'>Error: " . $e->getMessage() . "</div>";
+        echo "<div class='alert alert-danger text-center'>Error: " . $e->getMessage() . "</div> ";
     }
 }
 ?>

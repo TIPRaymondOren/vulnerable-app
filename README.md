@@ -19,3 +19,8 @@
 #### customer1' OR 1=1 --'
 
 --------
+### How to run
+### Step 1: php -S localhost:8080
+### Step 2: go to your damn browser and type this shi: http://localhost:8080/vulnerable-app/index.php
+### Step 3: if di gumana, wala na akong pake. eme lagay mo xampp/php sa environmental variables mo.
+### Step 4: Lagay mo na rin sa htdocs yung folder para sure. if ayaw tapon mo na laptop mo and buy new
