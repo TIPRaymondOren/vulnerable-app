@@ -1,10 +1,16 @@
 <?php
+session_start(); // Start the session
 include 'db.php';
+include 'logging.php'; // Include the logging function
+
+// Log page visit
+logInteraction('Guest', 'LOGIN', "User visited the login page.", 'success');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = md5($_POST['password']); // Weak hashing (MD5)
 
+    // Vulnerable SQL query (intentionally left vulnerable for demonstration)
     $sql = "SELECT * FROM users WHERE username='$username' AND password='$password'";
     try {
         $result = $conn->query($sql);
@@ -12,6 +18,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result->rowCount() > 0) {
             $user = $result->fetch(PDO::FETCH_ASSOC);
 
+            // Log successful login
+            logInteraction($username, 'LOGIN', "User logged in successfully.", 'success');
+
+            // Store user data in the session
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
+
+            // Redirect based on role
             if ($user['role'] === 'admin') {
                 header("Location: admin.php");
             } else {
@@ -19,16 +33,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             exit();
         } else {
+            // Log failed login
+            logInteraction($username, 'LOGIN', "Failed login attempt.", 'failure');
             echo "<div class='alert alert-danger text-center'>Invalid credentials!</div>";
         }
     } catch (PDOException $e) {
-        echo "<div class='alert alert-danger text-center'>Error: " . $e->getMessage() . "</div> ";
+        // Log runtime error
+        logInteraction($username, 'LOGIN', "Error: " . $e->getMessage(), 'failure');
+        echo "<div class='alert alert-danger text-center'>Error: " . $e->getMessage() . "</div>";
     }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
             align-items: center;
         }
+
         .container {
             display: flex;
             padding: 0px;
@@ -53,10 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
+
         .form-section {
             flex: 1;
             padding: 2rem;
         }
+
         .image-section {
             flex: 1;
             background: url('assets/reg.jpg') center/cover no-repeat;
@@ -64,24 +86,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-bottom-right-radius: 15px;
             min-height: 400px;
         }
+
         .form-control {
             border-radius: 8px;
         }
+
         .btn-primary {
             width: 100%;
             border-radius: 8px;
         }
+
         .brand {
             display: flex;
             align-items: center;
             font-weight: bold;
         }
+
         .brand img {
             width: 30px;
             margin-right: 10px;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="form-section">
@@ -107,4 +134,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="image-section"></div>
     </div>
 </body>
+
 </html>

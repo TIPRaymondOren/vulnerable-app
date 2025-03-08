@@ -1,3 +1,38 @@
+<?php
+session_start(); // Start the session
+include 'db.php';
+include 'logging.php'; // Include the logging function
+
+// Log page visit
+logInteraction('Guest', 'REGISTER', "User visited the registration page.", 'success');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $password = md5($_POST['password']); // Weak hashing (MD5)
+
+    try {
+        // Insert user into the database
+        $stmt = $conn->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
+        $stmt->execute([$username, $password, $email]);
+
+        // Log successful registration
+        logInteraction($username, 'REGISTER', "User registered successfully. Username: $username, Email: $email", 'success');
+
+        // Store the username in the session
+        $_SESSION['username'] = $username;
+
+        // Redirect to login page
+        header("Location: login.php");
+        exit();
+    } catch (PDOException $e) {
+        // Log registration failure
+        logInteraction($username, 'REGISTER', "Registration failed: " . $e->getMessage(), 'failure');
+        echo "<div class='alert alert-danger text-center'>Error: Registration failed. Please try again.</div>";
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,8 +70,6 @@
             border-bottom-right-radius: 15px;
             min-height: 400px; /* Ensures it has enough space */
         }
-
- 
 
         .form-control {
             border-radius: 8px;

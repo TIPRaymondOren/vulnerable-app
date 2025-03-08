@@ -1,6 +1,16 @@
 <?php
-session_start(); // Start a session to manage the cart
+session_start(); // Start the session
 include 'db.php';
+include 'logging.php'; // Include the logging function
+
+// Redirect to login if the user is not logged in
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Log page visit
+logInteraction($_SESSION['username'], 'DASHBOARD', "User visited the dashboard.", 'success');
 
 // Initialize the cart if it doesn't exist
 if (!isset($_SESSION['cart'])) {
@@ -23,6 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             'price' => $product['price'],
             'quantity' => $quantity
         ];
+
+        // Log add to cart
+        logInteraction($_SESSION['username'], 'CART', "Added to cart: {$product['name']}, Quantity: $quantity", 'success');
         echo "<div class='alert alert-success text-center'>Product added to cart!</div>";
     }
 }
@@ -31,7 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) {
     $product_id = $_POST['product_id'];
     if (isset($_SESSION['cart'][$product_id])) {
+        $product_name = $_SESSION['cart'][$product_id]['name'];
         unset($_SESSION['cart'][$product_id]);
+
+        // Log remove from cart
+        logInteraction($_SESSION['username'], 'CART', "Removed from cart: $product_name", 'success');
         echo "<div class='alert alert-success text-center'>Product removed from cart!</div>";
     }
 }
@@ -55,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     }
 
     if (empty($errors)) {
-        // Process the order (for demonstration, we'll just clear the cart)
-        $total_cost = array_sum(array_map(function($item) {
+        // Process the order
+        $total_cost = array_sum(array_map(function ($item) {
             return $item['price'] * $item['quantity'];
         }, $_SESSION['cart']));
 
@@ -72,10 +89,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
             $conn->exec($sql);
         }
 
+        // Log successful checkout
+        logInteraction($_SESSION['username'], 'CHECKOUT', "Order placed successfully. Total cost: $$total_cost", 'success');
+
         // Clear the cart
         $_SESSION['cart'] = [];
         echo "<div class='alert alert-success text-center'>Order placed successfully! Total cost: $$total_cost</div>";
     } else {
+        // Log failed checkout
+        logInteraction($_SESSION['username'], 'CHECKOUT', "Checkout failed: " . implode(", ", $errors), 'failure');
         foreach ($errors as $error) {
             echo "<div class='alert alert-danger text-center'>$error</div>";
         }
@@ -85,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
         body {
             background-color: #F8F9FA;
         }
+
         .dashboard-container {
             background-color: white;
             padding: 2rem;
@@ -103,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
             max-width: 1200px;
             margin: 5rem auto;
         }
+
         .cart-summary {
             background-color: #f8f9fa;
             padding: 1rem;
@@ -111,9 +136,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
         }
     </style>
 </head>
+
 <body>
     <div class="dashboard-container">
-        <h2 class="text-center mb-4">Welcome to Your Dashboard</h2>
+        <h2 class="text-center mb-4">Welcome to Your Dashboard, <?php echo htmlspecialchars($_SESSION['username']); ?>!
+        </h2>
 
         <!-- Cart Summary -->
         <div class="cart-summary">
@@ -141,14 +168,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
                                 <td>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
-                                        <button type="submit" name="remove_from_cart" class="btn btn-danger btn-sm">Remove</button>
+                                        <button type="submit" name="remove_from_cart"
+                                            class="btn btn-danger btn-sm">Remove</button>
                                     </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-                <p class="text-end"><strong>Total: $<?php echo array_sum(array_map(function($item) {
+                <p class="text-end"><strong>Total: $<?php echo array_sum(array_map(function ($item) {
                     return $item['price'] * $item['quantity'];
                 }, $_SESSION['cart'])); ?></strong></p>
             <?php endif; ?>
@@ -181,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
                                 <input type="number" name="quantity" value="1" min="1" style="width: 60px;">
                         </td>
                         <td>
-                                <button type="submit" name="add_to_cart" class="btn btn-primary btn-sm">Add to Cart</button>
+                            <button type="submit" name="add_to_cart" class="btn btn-primary btn-sm">Add to Cart</button>
                             </form>
                         </td>
                     </tr>
@@ -194,12 +222,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
         <form method="POST">
             <div class="mb-3">
                 <label for="card_number" class="form-label">Card Number</label>
-                <input type="text" class="form-control" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" required>
+                <input type="text" class="form-control" id="card_number" name="card_number"
+                    placeholder="1234 5678 9012 3456" required>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="expiry_date" class="form-label">Expiry Date</label>
-                    <input type="text" class="form-control" id="expiry_date" name="expiry_date" placeholder="MM/YY" required>
+                    <input type="text" class="form-control" id="expiry_date" name="expiry_date" placeholder="MM/YY"
+                        required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="cvv" class="form-label">CVV</label>
@@ -213,4 +243,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

@@ -1,5 +1,16 @@
 <?php
+session_start(); // Start the session
 include 'db.php';
+include 'logging.php'; // Include the logging function
+
+// Redirect to login if the user is not an admin
+if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
+    header("Location: login.php");
+    exit();
+}
+
+// Log page visit
+logInteraction($_SESSION['username'], 'ADMIN', "Admin visited the admin page.", 'success');
 
 // Fetch all products
 $sql = "SELECT * FROM products";
@@ -13,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $price = $_POST['price'];
         $sql = "INSERT INTO products (name, price) VALUES ('$name', '$price')";
         $conn->exec($sql);
+
+        // Log product addition
+        logInteraction($_SESSION['username'], 'ADMIN', "Added product: $name, Price: $price", 'success');
         header("Location: admin.php"); // Refresh the page
         exit();
     } elseif (isset($_POST['delete'])) {
@@ -20,6 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = $_POST['id'];
         $sql = "DELETE FROM products WHERE id='$id'";
         $conn->exec($sql);
+
+        // Log product deletion
+        logInteraction($_SESSION['username'], 'ADMIN', "Deleted product with ID: $id", 'success');
         header("Location: admin.php"); // Refresh the page
         exit();
     }
@@ -28,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         body {
             background-color: #F8F9FA;
         }
+
         .admin-container {
             background-color: white;
             padding: 2rem;
@@ -48,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body>
     <div class="admin-container">
         <h2 class="text-center mb-4">Admin Panel</h2>
@@ -98,4 +118,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
